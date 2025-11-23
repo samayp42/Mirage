@@ -1,0 +1,7 @@
+{
+  "name": "AI Photo Booth",
+  "description": "An interactive, AI-powered photo experience for weddings and events that transforms guest photos into themed, imaginative artworks.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
