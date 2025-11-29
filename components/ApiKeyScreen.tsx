@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Key, Sparkles, ExternalLink, Lock } from 'lucide-react';
+import { Key, Sparkles, ExternalLink, Lock, AlertTriangle } from 'lucide-react';
 
 interface ApiKeyScreenProps {
   onSelectKey: () => void;
@@ -16,12 +16,19 @@ const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ onSelectKey }) => {
         </div>
 
         <h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-4">
-          Pro Studio Access
+          Studio Access
         </h1>
         
         <p className="text-gray-300 mb-8 leading-relaxed">
-          To use the high-fidelity <strong>Gemini 3 Pro</strong> model for photo-realistic editing, please connect a Google Cloud API key.
+          To continue generating or to access high-fidelity models, please connect a <strong>Google Cloud API Key</strong>.
         </p>
+
+        <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-8 flex items-start gap-3 text-left">
+            <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-yellow-200/80">
+                If you are seeing this screen, the free demo quota may have been exhausted. Connecting a personal key allows unlimited generation.
+            </p>
+        </div>
 
         <button
           onClick={onSelectKey}

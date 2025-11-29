@@ -1,5 +1,5 @@
 
-export type AppState = 'welcome' | 'style_select' | 'capture' | 'generating' | 'result' | 'download' | 'api_key_selection';
+export type AppState = 'welcome' | 'style_select' | 'capture' | 'generating' | 'result' | 'download' | 'api_key_selection' | 'gallery';
 
 export type Category = 'adult' | 'child' | 'couple';
 

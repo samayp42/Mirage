@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Style } from '../types';
 import { generateStyledImage } from '../services/geminiService';
 import { Loader2 } from 'lucide-react';
@@ -12,7 +11,14 @@ interface LoadingScreenProps {
 }
 
 const LoadingScreen: React.FC<LoadingScreenProps> = ({ capturedImage, style, onComplete, onError }) => {
+  // Ref to track if generation has already started to prevent double-firing in Strict Mode
+  const hasStartedGeneration = useRef(false);
+
   useEffect(() => {
+    // If we have already started generation for this mount, ignore subsequent effects
+    if (hasStartedGeneration.current) return;
+    hasStartedGeneration.current = true;
+
     const generateImage = async () => {
       try {
         const result = await generateStyledImage(capturedImage, style.prompt);

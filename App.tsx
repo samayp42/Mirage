@@ -8,12 +8,15 @@ import LoadingScreen from './components/LoadingScreen';
 import ResultScreen from './components/ResultScreen';
 import DownloadScreen from './components/QrCodeScreen';
 import ApiKeyScreen from './components/ApiKeyScreen';
+import GalleryScreen from './components/GalleryScreen';
 import { ADULT_STYLES, KID_STYLES, COUPLE_STYLES, buildDynamicPrompt } from './constants';
+import { saveToGallery, incrementGenerationCount } from './services/db';
 
 const App: React.FC = () => {
     const [appState, setAppState] = useState<AppState>('welcome');
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
+    const [selectedGender, setSelectedGender] = useState<Gender>('female'); // Lifted state
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -36,32 +39,57 @@ const App: React.FC = () => {
         setAppState('style_select');
     }, []);
 
-    const handleStyleSelect = useCallback((style: Style) => {
+    const handleStyleSelect = useCallback((style: Style, gender?: Gender) => {
         setSelectedStyle(style);
+        if (gender) {
+            setSelectedGender(gender);
+        }
         setAppState('capture');
     }, []);
 
-    const handlePhotoCapture = useCallback((imageDataUrl: string, gender: Gender) => {
+    const handlePhotoCapture = useCallback((imageDataUrl: string) => {
         setCapturedImage(imageDataUrl);
         if (selectedStyle) {
-            const prompt = buildDynamicPrompt(selectedStyle.id, gender, selectedStyle.prompt);
+            // Use the selectedGender from state
+            const prompt = buildDynamicPrompt(selectedStyle.id, selectedGender, selectedStyle.prompt);
             setFinalPrompt(prompt);
         }
         setAppState('generating');
-    }, [selectedStyle]);
+    }, [selectedStyle, selectedGender]);
     
-    const handleGenerationComplete = useCallback((imageDataUrl: string) => {
+    const handleGenerationComplete = useCallback(async (imageDataUrl: string) => {
         setGeneratedImage(imageDataUrl);
         setError(null);
+        
+        // Update Stats
+        incrementGenerationCount();
+
+        // AUTO SAVE TO DATABASE
+        if (selectedStyle) {
+            await saveToGallery(imageDataUrl, selectedStyle.name, finalPrompt);
+        }
+
         setAppState('result');
-    }, []);
+    }, [selectedStyle, finalPrompt]);
 
     const handleGenerationError = useCallback((errorMessage: string) => {
         console.error("App Error:", errorMessage);
-        if (errorMessage.includes("Requested entity was not found") || errorMessage.includes("PERMISSION_DENIED") || errorMessage.includes("403")) {
+        
+        // CHECK FOR FALLBACK CONDITIONS (Quota, Permissions, 429s)
+        if (
+            errorMessage.includes("Requested entity was not found") || 
+            errorMessage.includes("PERMISSION_DENIED") || 
+            errorMessage.includes("403") ||
+            errorMessage.includes("429") || 
+            errorMessage.includes("quota") || 
+            errorMessage.includes("exhausted") ||
+            errorMessage.includes("Too Many Requests")
+        ) {
+             // Fallback to API Key Selection to let user switch keys
              setAppState('api_key_selection');
              return;
         }
+        
         setError(errorMessage);
         setAppState('capture');
     }, []);
@@ -101,17 +129,28 @@ const App: React.FC = () => {
         setFinalPrompt('');
     }, []);
 
+    const handleOpenGallery = useCallback(() => {
+        setAppState('gallery');
+    }, []);
+
     const renderScreen = () => {
         switch (appState) {
             case 'api_key_selection':
                 return <ApiKeyScreen onSelectKey={handleApiKeySelection} />;
             case 'welcome':
-                return <WelcomeScreen onCategorySelect={handleCategorySelect} />;
+                return <WelcomeScreen onCategorySelect={handleCategorySelect} onOpenGallery={handleOpenGallery} />;
+            case 'gallery':
+                return <GalleryScreen onBack={handleStartOver} />;
             case 'style_select':
                 let styles = ADULT_STYLES;
                 if (selectedCategory === 'child') styles = KID_STYLES;
                 if (selectedCategory === 'couple') styles = COUPLE_STYLES;
-                return <StyleSelectionScreen styles={styles} onStyleSelect={handleStyleSelect} onBack={handleStartOver} />;
+                return <StyleSelectionScreen 
+                    styles={styles} 
+                    onStyleSelect={handleStyleSelect} 
+                    onBack={handleStartOver} 
+                    category={selectedCategory}
+                />;
             case 'capture':
                 return <CaptureScreen 
                     onCapture={handlePhotoCapture} 
@@ -119,6 +158,7 @@ const App: React.FC = () => {
                     error={error} 
                     onBack={handleBackToStyleSelect}
                     category={selectedCategory}
+                    selectedGender={selectedGender}
                 />;
             case 'generating':
                 if (!capturedImage || !selectedStyle) {
@@ -139,7 +179,7 @@ const App: React.FC = () => {
                 }
                 return <DownloadScreen imageDataUrl={generatedImage} onBack={handleBackToResult} />
             default:
-                return <WelcomeScreen onCategorySelect={handleCategorySelect} />;
+                return <WelcomeScreen onCategorySelect={handleCategorySelect} onOpenGallery={handleOpenGallery} />;
         }
     };
 
