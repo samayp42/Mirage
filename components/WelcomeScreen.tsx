@@ -7,9 +7,10 @@ import { getGenerationCount } from '../services/db';
 interface WelcomeScreenProps {
   onCategorySelect: (category: Category) => void;
   onOpenGallery: () => void;
+  onGoIdle: () => void;
 }
 
-const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onCategorySelect, onOpenGallery }) => {
+const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onCategorySelect, onOpenGallery, onGoIdle }) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -20,9 +21,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onCategorySelect, onOpenG
     <div className="flex flex-col h-full w-full animate-fade-in bg-[#050505]">
       {/* Branding Header */}
       <div className="absolute top-0 left-0 p-10 md:p-16 z-30 flex justify-between w-full pointer-events-none">
-        <div className="pointer-events-auto">
+        
+        {/* Clickable Branding to Go Idle */}
+        <div onClick={onGoIdle} className="pointer-events-auto cursor-pointer group hover:opacity-80 transition-opacity">
             <div className="flex items-center gap-4 mb-4 opacity-80">
-            <Aperture className="w-6 h-6 md:w-8 md:h-8" />
+            <Aperture className="w-6 h-6 md:w-8 md:h-8 group-hover:rotate-90 transition-transform duration-700" />
             <span className="text-sm md:text-base font-mono tracking-[0.4em] uppercase">Creative AI Studio</span>
             </div>
             <h1 className="font-display text-7xl md:text-9xl font-light tracking-tighter text-white leading-none">

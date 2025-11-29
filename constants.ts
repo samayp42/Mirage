@@ -1,4 +1,3 @@
-
 import { Style, Gender } from './types';
 
 // ============================================================================
@@ -14,13 +13,25 @@ CRITICAL INSTRUCTION:
 2. PRESERVE IDENTITY 100%: Keep their eyes, nose, mouth, glasses (if any), and facial structure exactly as they are.
 3. INTEGRATION (MOST IMPORTANT): The input face must NOT look pasted. You MUST re-light the face to match the scene's lighting temperature, color, and shadows.
 4. NO FILTERS: Do not smooth the skin. Keep visible pores and texture.
+5. AGE LOCK: Do not make the person look older or younger. Keep their exact age.
+`;
+
+const FEMALE_FIDELITY_GUARD = `
+FEMALE FIDELITY & TEXTURE LOCK:
+- STRICTLY FORBIDDEN: Skin smoothing, airbrushing, beauty filters, soft-focus, or reducing age.
+- REQUIRED: High-frequency skin texture (visible pores, fine lines, skin irregularities, peach fuzz).
+- MAKEUP: Keep the makeup natural to the input. Do NOT add heavy "AI Glamour" makeup.
+- STRUCTURE: The jawline, nose shape, and eye shape MUST be identical to the input. Do not "feminize" or "idealize" features.
+- LIGHTING PHYSICS: The face must show hard shadows and distinct highlights. No flat "beauty" lighting.
+- OUTPUT: Must look like a RAW camera file (CR3/ARW), sharp and uncompressed.
 `;
 
 const PHOTOREALISM_SPECS = `
 STYLE: Raw High-End Editorial Photography.
 CAMERA: Canon R5, 85mm Portrait Lens, f/1.8 aperture.
 QUALITY: 8k Resolution, Highly Detailed, Volumetric Lighting, Ray Tracing.
-NEGATIVE PROMPT: Cartoon, illustration, painting, drawing, bad photoshop, pasted face, floating head, mismatched lighting, smooth skin, airbrushed, low resolution.
+TEXTURE: High-frequency skin details, visible pores, natural skin irregularities.
+NEGATIVE PROMPT: Cartoon, illustration, painting, drawing, bad photoshop, pasted face, floating head, mismatched lighting, smooth skin, airbrushed, low resolution, plastic skin, doll face, instagram filter, heavy makeup, soft focus, blur.
 `;
 
 // ============================================================================
@@ -29,27 +40,31 @@ NEGATIVE PROMPT: Cartoon, illustration, painting, drawing, bad photoshop, pasted
 
 export const buildDynamicPrompt = (styleId: string, gender: Gender, basePrompt: string): string => {
   
+  const genderGuard = gender === 'female' ? FEMALE_FIDELITY_GUARD : "";
+
   // --- ADULT STYLES ---
 
   if (styleId === 'adult-bollywood') {
     const outfit = gender === 'male' 
       ? "a sharp Black Velvet Bollywood Designer Tuxedo with sequins" 
-      : "a glamorous High-Fashion Red Carpet Gown with heavy diamond jewelry";
+      : "a Designer Red Carpet Saree with diamond jewelry"; // Changed to Saree for more authentic structure
     
     return `
 ${IDENTITY_INSTRUCTION}
+${genderGuard}
 
 THE SCENE:
-The subject is a famous Bollywood Actor on the Red Carpet at a Paparazzi event with flashing cameras.
+The subject is a famous Bollywood Actor on the Red Carpet at a Paparazzi event.
 They are wearing ${outfit}.
 Framing: Medium Shot (Waist Up) - The face must be the clear focus.
 Background: A dark night event filled with hundreds of camera flashes (bokeh).
 
 LIGHTING MATCH (CRITICAL):
-The lighting is DIRECT FLASH PHOTOGRAPHY (High Contrast).
+The lighting is DIRECT FLASH PHOTOGRAPHY (Hard Light).
 The subject's face MUST have bright, sharp specular highlights on the forehead and cheeks from the flashes.
+Shadows under the chin must be sharp and distinct (Hard Shadow).
 The skin tone should look raw and textured (visible pores), matching the cool white temperature of the camera flashes.
-Do NOT apply soft beauty filters. It must look like a raw paparazzi photo.
+Do NOT apply soft beauty filters. It must look like a raw unedited paparazzi photo.
 
 ${PHOTOREALISM_SPECS}
     `.trim();
@@ -62,18 +77,21 @@ ${PHOTOREALISM_SPECS}
 
     return `
 ${IDENTITY_INSTRUCTION}
+${genderGuard}
 
 THE SCENE:
 The subject is Indian Royalty standing in the archway of an ancient Sandstone Palace in Jaipur.
 They are wearing ${outfit}.
-Framing: Medium Shot (Waist Up).
+Framing: Medium Shot (Waist Up) - Camera is close enough to see skin texture.
 Background: Intricate stone carvings, blurred slightly (bokeh).
 
 LIGHTING MATCH (CRITICAL):
 The time is GOLDEN HOUR (Sunset).
+The lighting is DIRECT and HARD (not soft/diffused).
+The sun MUST cast distinct shadows on the face (nose/jaw) to reveal structure.
 The light hitting the face MUST be WARM GOLD/ORANGE.
-Do NOT generate a pale or white face. The skin MUST absorb the warm ambient light of the palace.
-Soft, directional sunlight illuminating the side of the face.
+The skin MUST look raw, unpolished, and textured.
+Do NOT apply a "dreamy" or "painting" filter.
 
 ${PHOTOREALISM_SPECS}
     `.trim();
@@ -82,17 +100,21 @@ ${PHOTOREALISM_SPECS}
   if (styleId === 'adult-vintage') {
     return `
 ${IDENTITY_INSTRUCTION}
+${genderGuard}
 
 THE SCENE:
-A vintage 1920s Silver Screen Portrait.
-The subject is wearing ${gender === 'male' ? 'a sharp three-piece suit with a pocket watch' : 'a vintage flapper dress with a feather headband'}.
-Framing: Classic Hollywood Close-Up.
+The subject is the star guest at a lavish 1920s Great Gatsby Gala Party.
+They are wearing ${gender === 'male' ? 'a sharp vintage Tuxedo with a bow tie' : 'a sparkling 1920s Flapper Dress with a feather headband'}.
+Framing: Medium Shot (Waist Up) - Classic Hollywood Portrait framing.
+Background: A Grand Art Deco Ballroom with blurred crystal chandeliers.
 
 LIGHTING MATCH (CRITICAL):
-BLACK AND WHITE PHOTOGRAPHY.
+BLACK AND WHITE PHOTOGRAPHY (Silver Nitrate).
 High Contrast "Film Noir" lighting.
-Add authentic FILM GRAIN to the skin texture.
-The face must look like it was photographed on silver nitrate film in 1924. No modern smoothness.
+KEY LIGHT: Hard, focused spotlight on the face.
+SHADOWS: Deep, sharp blacks. No soft gray fill light.
+TEXTURE: Add authentic FILM GRAIN. The skin must look sharp and grainy, not smooth or glowing.
+The image must look like a sharp, focused historical photograph from 1924.
 
 ${PHOTOREALISM_SPECS}
     `.trim();
@@ -265,14 +287,14 @@ export const KID_STYLES: Style[] = [
     name: 'Royal Dynasty',
     description: 'Palace, Elephants & Horses',
     prompt: "",
-    previewImageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSLUyimalHJiSzxWMQN4Eu686BxkFQJEOViw&s', 
+    previewImageUrl: '/assets/royal.png', 
   },
   {
     id: 'kid-3',
     name: 'Toon Adventure',
     description: '3D Pixar-Style Explorer',
     prompt: "",
-    previewImageUrl: 'https://img.freepik.com/premium-photo/cute-boy-pixar-style-cartoon-3d-illustration-generative-ai_776674-582329.jpg', 
+    previewImageUrl: '/assets/toon.png', 
   },
 ];
 
